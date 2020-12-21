@@ -14,9 +14,11 @@
 
 ## Get started
 
-- Online version: [https://privacy.sexy](https://privacy.sexy)
-  - or download latest desktop version for [Windows](https://github.com/undergroundwires/privacy.sexy/releases/download/0.9.0/privacy.sexy-Setup-0.9.0.exe), [Linux](https://github.com/undergroundwires/privacy.sexy/releases/download/0.9.0/privacy.sexy-0.9.0.AppImage), [macOS](https://github.com/undergroundwires/privacy.sexy/releases/download/0.9.0/privacy.sexy-0.9.0.dmg)
-- 💡 Come back regularly to apply latest version for stronger privacy and security.
+- Online version at [https://privacy.sexy](https://privacy.sexy)
+  - 💡 No need to run any compiled software on your computer.
+- Alternatively download offline version for [Windows](https://github.com/undergroundwires/privacy.sexy/releases/download/0.9.0/privacy.sexy-Setup-0.9.0.exe), [macOS](https://github.com/undergroundwires/privacy.sexy/releases/download/0.9.0/privacy.sexy-0.9.0.dmg) or [Linux](https://github.com/undergroundwires/privacy.sexy/releases/download/0.9.0/privacy.sexy-0.9.0.AppImage).
+  - 💡 Single click to execute your script.
+- ❗ Come back regularly to apply latest version for stronger privacy and security.
 
 [![privacy.sexy application](img/screenshot.png)](https://privacy.sexy)
 

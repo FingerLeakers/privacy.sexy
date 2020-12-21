@@ -1,6 +1,12 @@
 <template>
     <div class="container" v-if="hasCode">
         <IconButton
+            v-if="this.canRun"
+            text="Run"
+            v-on:click="executeCodeAsync"
+            icon-prefix="fas" icon-name="play">
+        </IconButton>
+        <IconButton
             :text="this.isDesktopVersion ? 'Save' : 'Download'"
             v-on:click="saveCodeAsync"
             icon-prefix="fas" 
@@ -40,6 +46,8 @@ import { IApplicationCode } from '@/application/Context/State/Code/IApplicationC
 import { IEventSubscription } from '@/infrastructure/Events/ISubscription';
 import { IScriptingDefinition } from '@/domain/IScriptingDefinition';
 import { OperatingSystem } from '@/domain/OperatingSystem';
+import { runCodeAsync } from '@/infrastructure/CodeRunner';
+import { IApplicationContext } from '@/application/Context/IApplicationContext';
 
 @Component({
   components: {
@@ -50,8 +58,9 @@ import { OperatingSystem } from '@/domain/OperatingSystem';
 export default class TheCodeButtons extends StatefulVue {
   public readonly macOsModalName = 'macos-instructions';
 
+  public readonly isDesktopVersion = Environment.CurrentEnvironment.isDesktop;
+  public canRun = false;
   public hasCode = false;
-  public isDesktopVersion = Environment.CurrentEnvironment.isDesktop;
   public isMacOsCollection = false;
   public fileName = '';
 
@@ -73,11 +82,16 @@ export default class TheCodeButtons extends StatefulVue {
       this.codeListener.unsubscribe();
     }
   }
+  public async executeCodeAsync() {
+    const context = await this.getCurrentContextAsync();
+    await executeCodeAsync(context);
+  }
 
   protected initialize(app: IApplication): void {
     return;
   }
   protected handleCollectionState(newState: ICategoryCollectionState): void {
+    this.canRun = this.isDesktopVersion && newState.collection.os === Environment.CurrentEnvironment.os;
     this.isMacOsCollection = newState.collection.os === OperatingSystem.macOS;
     this.fileName = buildFileName(newState.collection.scripting);
     this.react(newState.code);
@@ -122,6 +136,15 @@ function buildFileName(scripting: IScriptingDefinition) {
   }
   return fileName;
 }
+
+async function executeCodeAsync(context: IApplicationContext) {
+    await runCodeAsync(
+        /*code*/ context.state.code.current,
+        /*appName*/ context.app.info.name,
+        /*fileExtension*/ context.state.collection.scripting.fileExtension,
+      );
+}
+
 </script>
 
 <style scoped lang="scss">
