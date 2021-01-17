@@ -1,15 +1,32 @@
+import { Environment } from '@/application/Environment/Environment';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
 import child_process from 'child_process';
+import { OperatingSystem } from '@/domain/OperatingSystem';
 
 export async function runCodeAsync(
-    code: string, folderName: string, fileExtension: string, node = getNodeJs()): Promise<void> {
+    code: string, folderName: string, fileExtension: string,
+    node = getNodeJs(), environment = Environment.CurrentEnvironment): Promise<void> {
     const dir = node.path.join(node.os.tmpdir(), folderName);
     await node.fs.promises.mkdir(dir, {recursive: true});
     const filePath = node.path.join(dir, `run.${fileExtension}`);
     await node.fs.promises.writeFile(filePath, code);
-    node.child_process.exec(filePath);
+    await node.fs.promises.chmod(filePath, '755');
+    const command = getExecuteCommand(filePath, environment);
+    node.child_process.exec(command);
+}
+
+function getExecuteCommand(scriptPath: string, environment: Environment): string {
+    switch(environment.os) {
+        case OperatingSystem.macOS:
+            return `open -a Terminal.app ${scriptPath}`;
+            // return `osascript -e "do shell script \\"${scriptPath}\\" with administrator privileges"` // runs in background
+        case OperatingSystem.Windows:
+            return scriptPath;
+        default:
+            throw Error('undefined os');
+    }
 }
 
 function getNodeJs(): INodeJs {
@@ -43,8 +60,8 @@ interface INodeFsPromisesMakeDirectoryOptions {
     recursive?: boolean;
 }
 
-interface INodeFsPromises {
+interface INodeFsPromises { // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/node/v13/fs.d.ts
+    chmod(path: string, mode: string | number): Promise<void>;
     mkdir(path: string, options: INodeFsPromisesMakeDirectoryOptions): Promise<string>;
     writeFile(path: string, data: string): Promise<void>;
 }
-

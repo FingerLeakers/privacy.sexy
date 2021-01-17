@@ -1,3 +1,5 @@
+import { EnvironmentStub } from './../stubs/EnvironmentStub';
+import { OperatingSystem } from './../../../src/domain/OperatingSystem';
 import 'mocha';
 import { expect } from 'chai';
 import { runCodeAsync } from '@/infrastructure/CodeRunner';
@@ -40,19 +42,31 @@ describe('CodeRunner', () => {
             expect(mocks.fs.writeFileHistory[0].data).to.equal(expectedCode);
             expect(mocks.fs.writeFileHistory[0].path).to.equal(expectedFilePath);
         });
-        it('executes the file', async () => {
+        describe('executes as expected', () => {
             // arrange
-            const expectedFilePath = 'expected-file-path';
-            const mocks = getNodeJsMocks();
-            mocks.os.setupTmpdir('tmp');
-            mocks.path.setupJoinSequence('folder', expectedFilePath);
+            const filePath = 'expected-file-path';
+            const testData = [ {
+                os: OperatingSystem.Windows,
+                expected: filePath
+            }, {
+                os: OperatingSystem.macOS,
+                expected: `open -a Terminal.app ${filePath}`
+            }]
+            for (const data of testData) {
+                it(`returns ${data.expected} on ${OperatingSystem[data.os]}`, async () => {
+                    const mocks = getNodeJsMocks();
+                    mocks.os.setupTmpdir('tmp');
+                    mocks.path.setupJoinSequence('folder', filePath);
+                    const env = new EnvironmentStub().withOs(data.os);
 
-            // act
-            await runCodeAsync('code', 'folderName', 'fileExtension', mocks);
+                    // act
+                    await runCodeAsync('code', 'folderName', 'fileExtension', mocks, env);
 
-            // assert
-            expect(mocks.child_process.executionHistory.length).to.equal(1);
-            expect(mocks.child_process.executionHistory[0]).to.equal(expectedFilePath);
+                    // assert
+                    expect(mocks.child_process.executionHistory.length).to.equal(1);
+                    expect(mocks.child_process.executionHistory[0]).to.equal(data.expected);
+                });
+            }
         });
     });
 });
@@ -119,8 +133,10 @@ function mockChildProcess() {
 function mockNodeFs() {
     interface IMkdirCall { path: string; isRecursive: boolean; }
     interface IWriteFileCall { path: string; data: string; }
+    interface IChmodCall { path: string; mode: string | number; }
     const mkdirHistory = new Array<IMkdirCall>();
     const writeFileHistory = new Array<IWriteFileCall>();
+    const chmodCallHistory = new Array<IChmodCall>();
     return {
         promises: {
             mkdir: (path, options) => {
@@ -131,8 +147,13 @@ function mockNodeFs() {
                 writeFileHistory.push({ path, data });
                 return Promise.resolve();
             },
+            chmod: (path, mode) => {
+                chmodCallHistory.push({ path, mode });
+                return Promise.resolve();
+            },
         },
         mkdirHistory,
         writeFileHistory,
+        chmodCallHistory,
     };
 }
